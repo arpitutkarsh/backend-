@@ -1,6 +1,6 @@
 //this middleware will verify if the user is or not
-import { jwt } from "jsonwebtoken"
-import { ApiError } from "../utils/ApiError"
+import  jwt  from "jsonwebtoken"
+import { ApiError } from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
 export const verifyJWT = async(req, res, next) => {
     try {

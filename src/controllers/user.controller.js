@@ -4,6 +4,7 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import {User} from '../models/user.model.js'
 import {uploadonCloudinary} from "../utils/cloudinary.js"
 import { response } from "express";
+import jwt from "jsonwebtoken";
 //we can also use asynch handler for below codes like
 /*
 const registerUser = asyncHandler(async(req, res) => {
@@ -27,7 +28,7 @@ const generateAccessandRefreshToken = async (userId) => {
         throw new ApiError(501, "Smething went wrong")
     }
 }
-const registerUser =  async (req, res) => {
+const registerUser =  asyncHandler(async (req, res) => {
     //get user details from frontend
     //validation like if any field is empty, user inputs the data in correct format etc etc
     //check if user already exists: CHeck using username and email also
@@ -114,9 +115,9 @@ const registerUser =  async (req, res) => {
 
 
 
-}
+})
 
-const loginUser = async(req, res) => {
+const loginUser = asyncHandler(async(req, res) => {
     //take input from user - use req body to get data
     //check validation
     //find the user
@@ -125,14 +126,14 @@ const loginUser = async(req, res) => {
     //send cookies
     //response
 
-    const {email, username, password} = req.body
-    if(!username || !email){
+    const {email, username, password} = await req.body
+    if(! username && ! email){
         throw new ApiError(400, "Username or Email is required")
     }
 
     //now find the user
     const user = await User.findOne({ //instead of findOne we can also use find
-        $or: [{username}, {email}]  //we are using $or because we want to find either username or email
+        $or: [{ username }, { email }]  //we are using $or because we want to find either username or email
     })
 
     if(!user){
@@ -150,7 +151,8 @@ const loginUser = async(req, res) => {
     const {accessToken, refreshToken} = await generateAccessandRefreshToken(user._id)
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken") //as we dont want to send password and refreshToken to the user
-
+    console.log(loggedInUser);
+    
     //send accessToken and refreshToken via cookies
     const options = {
         httpOnly: true,
@@ -169,7 +171,8 @@ const loginUser = async(req, res) => {
             "User logged in successfully"
         )
     )
-}
+    
+})
 
 const logoutUser = async(req, res) => {
     //first of all clear all the cookies for the user
@@ -196,8 +199,38 @@ const logoutUser = async(req, res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged out"))
+    .json(new ApiResponse(201, {}, "User logged out"))
 }
 
+const refreshAccessToken = async(req, res) => {
+    const incomingRequestToken = req.cookies.refreshToken || req.body.refreshToken
+    if(!incomingRequestToken){
+        throw new ApiError(401, "BAD REQUEST")
+    }
+    //now verifying token
+    try {
+        const decodedToken = jwt.verify(incomingRequestToken, process.env.REFRESH_TOKEN_SECRET)
+        const user = await User.findById(decodedToken?._id)
+        if(!user){
+            throw new ApiError(401, "invalid refresh token")
+        }
+        if(user.incomingRequestToken !== user.refreshToken){
+            throw new ApiError(401, "BAD REQUEST 217")
+        }
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+        const {accessToken, newrefreshToken} = await generateAccessandRefreshToken(user._id)
+        return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(new ApiResponse(200, {accessToken, refreshToken: newrefreshToken}, "Access tken refreshed"))
+    
+    } catch (error) {
+        throw new ApiError(401, "BAD REQUEST-232")
+    }
+}
 
-export {registerUser, loginUser, logoutUser};
+export {registerUser, loginUser, logoutUser, refreshAccessToken};
