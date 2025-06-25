@@ -288,12 +288,34 @@ const updateUserAvatar = async(req, res) => {
         throw new ApiError(400, "Error while uploading on Cloduinary")
     }
 
-    await User.findByIdAndUpdate(req.user?._id, {
+    const user = await User.findByIdAndUpdate(req.user?._id, {
         $set: {
             avatar: avatar.url
         }
     }, {new: true}
     ).select("-password")
+
+    return res.status(200).json(new ApiResponse(200, user, "Avatar image uploaded successfully"))
+}
+
+const updateUserCoverImage = async(req, res) => {
+    const coverImageLocalPath = req.file?.path //here we are writing file instead of files because we will be taking only one file and in the register user function we used files beacuse there we have to take 
+    if(!coverImageLocalPath){
+        throw new ApiError(401, "Upload COver Image file")
+    }
+    const coverImage = await uploadonCloudinary(coverImageLocalPath)
+    if(!coverImage.url){
+        throw new ApiError(400, "Error while uploading on Cloduinary")
+    }
+
+    const user = await User.findByIdAndUpdate(req.user?._id, {
+        $set: {
+            coverImage: coverImage.url
+        }
+    }, {new: true}
+    ).select("-password")
+
+    return res.status(200).json(new ApiResponse(200, user, "Cover image uploaded successfully"))
 }
 
 
@@ -304,5 +326,6 @@ export {registerUser,
     changeCurrentPassword, 
     getCurrentUser,
     updateAccountDetails,
-    updateUserAvatar
+    updateUserAvatar,
+    updateUserCoverImage
 };
