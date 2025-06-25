@@ -252,5 +252,39 @@ const getCurrentUser = async(req, res) => {
     return res.status(200).json(200, req.user, "Current user fetched successfully")
 }
 
- 
-export {registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser};
+const updateAccountDetails = async(req, res) => {
+    const {fullname, email} = req.body
+
+    if(!fullname && !email){
+        throw new ApiError(401, "Fullname and Email is required")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                fullname: fullname,  //we can also write fullname only
+                email: email
+            }
+        }, 
+        {new: true}
+    
+    ).select("-password")
+
+    return res.status(200).json(new ApiResponse(200, user, "Account details updated successfully"))
+}
+
+//to update files we need
+//1. We need to use middleware like multer to accept the file
+//2. Only logged in accounts can update their photos
+
+//const 
+
+export {registerUser, 
+    loginUser, 
+    logoutUser,
+    refreshAccessToken, 
+    changeCurrentPassword, 
+    getCurrentUser,
+    updateAccountDetails
+};
