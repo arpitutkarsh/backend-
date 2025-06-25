@@ -278,7 +278,24 @@ const updateAccountDetails = async(req, res) => {
 //1. We need to use middleware like multer to accept the file
 //2. Only logged in accounts can update their photos
 
-//const 
+const updateUserAvatar = async(req, res) => {
+    const avatarLocalPath = req.file?.path //here we are writing file instead of files because we will be taking only one file and in the register user function we used files beacuse there we have to take 
+    if(!avatarLocalPath){
+        throw new ApiError(401, "Upload Avatar file")
+    }
+    const avatar = await uploadonCloudinary(avatarLocalPath)
+    if(!avatar.url){
+        throw new ApiError(400, "Error while uploading on Cloduinary")
+    }
+
+    await User.findByIdAndUpdate(req.user?._id, {
+        $set: {
+            avatar: avatar.url
+        }
+    }, {new: true}
+    ).select("-password")
+}
+
 
 export {registerUser, 
     loginUser, 
@@ -286,5 +303,6 @@ export {registerUser,
     refreshAccessToken, 
     changeCurrentPassword, 
     getCurrentUser,
-    updateAccountDetails
+    updateAccountDetails,
+    updateUserAvatar
 };
