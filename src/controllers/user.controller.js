@@ -249,13 +249,13 @@ const changeCurrentPassword = async(req, res) => {
 }
 
 const getCurrentUser = async(req, res) => {
-    return res.status(200).json(200, req.user, "Current user fetched successfully")
+    return res.status(200).json(new ApiResponse(200, req.user, "Current User Fetched Successfully"))
 }
 
 const updateAccountDetails = async(req, res) => {
     const {fullname, email} = req.body
 
-    if(!fullname && !email){
+    if(!fullname || !email){
         throw new ApiError(401, "Fullname and Email is required")
     }
 
