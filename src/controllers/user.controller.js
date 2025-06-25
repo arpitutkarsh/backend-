@@ -233,4 +233,21 @@ const refreshAccessToken = async(req, res) => {
     }
 }
 
-export {registerUser, loginUser, logoutUser, refreshAccessToken};
+const changeCurrentPassword = async(req, res) => {
+    const {oldPassword, newPassword} = req.body
+    //first we will have to find the user through which we will verify if the old password entered by the user is equal to the password saved in the db
+    //to get the user, we know that if the user is able to change the password it means that he is logged in
+    //and the user is loggedin because we have used auth middleware and the middleware gives req.user
+    const user = await User.findById(req.user?._id)
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword) //we are using await here as isPasswordCorrect function written in user.model.js file is async
+    if(!isPasswordCorrect){
+        throw new ApiError(401, "Old Password is Incorrect, Kindly Enter correct password")
+    }
+    user.password = newPassword
+    await user.save({validateBeforeSave: false}) //we are using await here as database is in another continent
+
+    return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"))
+}
+
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword};
