@@ -3,7 +3,6 @@ import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {User} from '../models/user.model.js'
 import {uploadonCloudinary} from "../utils/cloudinary.js"
-import { response } from "express";
 import jwt from "jsonwebtoken";
 //we can also use asynch handler for below codes like
 /*
@@ -249,5 +248,9 @@ const changeCurrentPassword = async(req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"))
 }
 
+const getCurrentUser = async(req, res) => {
+    return res.status(200).json(200, req.user, "Current user fetched successfully")
+}
 
-export {registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword};
+ 
+export {registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser};
